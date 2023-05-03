@@ -1,0 +1,84 @@
+#include <iostream>
+#include <cmath>
+#include <iomanip>
+
+#ifdef WIN32
+#define GNUPLOT_NAME "C:\\gnuplot\\bin\\gnuplot -persist"
+#else
+#define GNUPLOT_NAME "gnuplot -persist"
+#endif
+
+double findVofT(int initialNumberOfVictims, int initialNumberOfKillers, double alphaOneCoef, double betaOneCoef, double alphaTwoCoef, double betaTwoCoef, double t) {
+
+    double cosAlphas = cos(sqrt(alphaOneCoef*alphaTwoCoef) * t);
+    double sinAlphas = sin(sqrt(alphaOneCoef*alphaTwoCoef) * t);
+
+    double vOfT = (initialNumberOfVictims - (alphaTwoCoef/betaTwoCoef) ) * cosAlphas - (initialNumberOfKillers - (alphaOneCoef/betaOneCoef))* ( (sqrt(alphaTwoCoef) * betaOneCoef)/(betaTwoCoef * sqrt(alphaOneCoef)) ) * sinAlphas + (alphaTwoCoef/betaTwoCoef);
+    return vOfT;
+}
+
+double findKOfT(int initialNumberOfVictims, int initialNumberOfKillers, double alphaOneCoef, double betaOneCoef, double alphaTwoCoef, double betaTwoCoef, double t) {
+
+    double cosAlphas = cos(sqrt(alphaOneCoef*alphaTwoCoef) * t);
+    double sinAlphas = sin(sqrt(alphaOneCoef*alphaTwoCoef) * t);
+
+    double kOfT = (initialNumberOfVictims - (alphaTwoCoef/betaTwoCoef)) * ( (sqrt(alphaOneCoef) * betaTwoCoef)/(betaOneCoef * sqrt(alphaTwoCoef))) * sinAlphas + (initialNumberOfKillers - (alphaOneCoef/betaOneCoef)) * cosAlphas + (alphaOneCoef/betaOneCoef);
+    return kOfT;
+}
+
+int main() {
+
+    #ifdef WIN32
+        FILE* pipe = _popen(GNUPLOT_NAME, "w");
+    #else
+        FILE* pipe = popen(GNUPLOT_NAME, "w");
+    #endif
+
+    int initialNumberOfVictims, initialNumberOfKillers;
+    double alphaOneCoef, betaOneCoef, alphaTwoCoef, betaTwoCoef;
+    int timeLimit;
+    int numberOfPointsAppr;
+
+    std::cin>>initialNumberOfVictims;
+    std::cin>>initialNumberOfKillers;
+    std::cin>>alphaOneCoef;
+    std::cin>>betaOneCoef;
+    std::cin>>alphaTwoCoef;
+    std::cin>>betaTwoCoef;
+    std::cin>>timeLimit;
+    std::cin>>numberOfPointsAppr;
+
+    double arrayOfTime[numberOfPointsAppr+1];
+    double arrayOfVictims[numberOfPointsAppr+1];
+    double arrayOfKillers[numberOfPointsAppr+1];
+    int counter = 0;
+
+    double stepSize;
+    stepSize = double(timeLimit)/double(numberOfPointsAppr);
+    double t = 0;
+    while (t<=timeLimit) {
+        arrayOfTime[counter] = t;
+        arrayOfKillers[counter] = findKOfT(initialNumberOfVictims, initialNumberOfKillers, alphaOneCoef, betaOneCoef, alphaTwoCoef, betaTwoCoef, t);
+        arrayOfVictims[counter] = findVofT(initialNumberOfVictims, initialNumberOfKillers, alphaOneCoef, betaOneCoef, alphaTwoCoef, betaTwoCoef, t);
+        counter++;
+        t = t + stepSize;
+    }
+
+    //to print victims
+
+    fprintf(pipe, "plot '-' using 1:2 with points\n");
+    for (int i = 0; i<numberOfPointsAppr+1; i++) {
+        fprintf(pipe, "%f\t%f\n", arrayOfTime[i], arrayOfVictims[i]);
+    }
+
+    //to print killers
+
+    fprintf(pipe, "plot '-' using 1:2 with points\n");
+    for (int i = 0; i<numberOfPointsAppr+1; i++) {
+        fprintf(pipe, "%f\t%f\n", arrayOfTime[i], arrayOfKillers[i]);
+    }
+
+    fprintf(pipe,"e\n");
+
+
+}
